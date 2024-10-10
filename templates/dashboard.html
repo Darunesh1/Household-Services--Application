@@ -1,0 +1,11 @@
+{% extends 'base.html' %} 
+{% block content %}
+    {% with messages=get_flashed_messages() %}
+    {% if messages %}
+        {% for message in messages %}
+            <P>{{message}}</P>
+        {% endfor%}
+    {% endif %}
+    {% endwith %}
+<a href="{{url_for('logout')}}">Press here to logout</a>
+{% endblock %}
