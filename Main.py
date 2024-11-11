@@ -350,6 +350,9 @@ def users():
 
 # edit from model
 class EditForm(FlaskForm):
+    def __init__(self, current_user, *args, **kwargs):
+        super(EditForm, self).__init__(*args, **kwargs)       
+        self.current_user = current_user
     
     name = StringField(
         'Name',
@@ -386,36 +389,54 @@ class EditForm(FlaskForm):
     
      
     
-    submit=SubmitField("Register")
+    submit=SubmitField("Register")  
+    
+    def validate_username(self, username):
+        if username.data != self.current_user.username:
+            user = User.query.filter_by(username=username.data).first()
+            if user:
+                raise ValidationError("Username already exists. Please choose a different one.")
+
+    def validate_email(self, email):
+        if email.data != self.current_user.email:
+            user = User.query.filter_by(email=email.data).first()
+            if user:
+                raise ValidationError("Email already exists. Please choose a different one.")
+    
+    
+# detele account
+@app.route('/user/delete/<int:id>',methods=['POST','GET'])
+@login_required
+def delete_user(id):
+    user = User.query.get_or_404(id)
+    if user:
+        db.session.delete(user)
+        db.session.commit()
+        flash(f"{user.name} has been deleted","danger")
+        return redirect(url_for('login'))
+        
+    return redirect(url_for('users'))
 
 # edit user details
 @app.route('/user/edit/<int:id>',methods=['GET','POST'])
 @login_required
 def edit_user(id):
     user=User.query.get_or_404(id)
-    form=EditForm()
+    form=EditForm(current_user=current_user)
     
     if form.validate_on_submit():
         user.name=form.name.data
         user.username=form.username.data        
         user.email=form.email.data
         user.mobile=form.mobile.data
-        user.role=form.role.data  
-        
-        if user.username != current_user.username:
-            user1=User.query.filter_by(username=username.data).first()
-            if user1:
-                flash('Username already exists. Please choose a different username.', 'danger')
-                return redirect(url_for('edit_user', id=user.id))
-        
-        
-            
+        user.role=form.role.data        
+          
                     
         db.session.add(user)
         db.session.commit()
         flash(f"{user.name} has been updated","success")
         
-        return redirect(url_for('users'))
+        return redirect(url_for('dashboard'))
     
     form.name.data=user.name
     form.username.data=user.username

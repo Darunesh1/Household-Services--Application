@@ -34,6 +34,6 @@
     </div>
     <br>
     <a href="{{url_for('edit_user',id=user.id)}}" class="btn btn-outline-success">Edit Detail</a>
-    <a href="#" class="btn btn-outline-danger">Delete Account</a>
+    <a href="{{url_for('delete_user',id=user.id)}}" class="btn btn-outline-danger">Delete Account</a>
     
 {% endblock %}
