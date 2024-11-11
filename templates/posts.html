@@ -1,4 +1,5 @@
-{% extends 'base.html' %} 
+{% extends 'base.html' %}
+
 {% block content %}
 <div >
     <div >        
@@ -21,19 +22,21 @@
 
     <br>
     <br>
-
-    <div class="card mb-3" style="display: flex; flex-direction: row; align-items: center; justify-content: center;">
-        <div class="card-body">
-            Username  <h5 class="card-title">{{ user.username }}</h5>
-            Name<p class="card-text">{{ user.name }}</p>
-            Email <p class="card-text">{{ user.email }}</p>
-            Contact <p class="card-text">{{ user.mobile }}</p>
-            <p class="card-text">{{ user.role }}</p>
-            <p class="card-text"><small class="text-muted">Joined {{ user.date_added }}</small></p>               
-        </div>
-    </div>
-    <br>
-    <a href="{{url_for('edit_user',id=user.id)}}" class="btn btn-outline-success">Edit Detail</a>
-    <a href="#" class="btn btn-outline-danger">Delete Account</a>
     
+    
+    {% for post in posts %}
+        <div class="card mb-3" style="display: flex; flex-direction: row; align-items: center; justify-content: center;">
+            <div class="card-body">
+                <h5 class="card-title">{{ post.title }}</h5>
+                <p class="card-text">{{ post.content }}</p>
+                <p class="card-text"><small class="text-muted">By {{ post.author }} on {{ post.date_posted }}</small></p>
+                <a href="{{ url_for('post', id=post.id) }}" class="btn btn-outline-primary">Read More</a>
+            </div>
+        </div>
+        <br>
+       
+                
+    {% endfor%}
+    
+
 {% endblock %}
