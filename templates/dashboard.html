@@ -29,11 +29,13 @@
                 Contact <p class="card-text">{{ user.mobile }}</p>
                 Address <p class="card-text">{{ user.address }}</p>
                 <p class="card-text">{{ user.role }}</p>
+                Status: <p class="card-text">{{ user.status }}</p>
+
                 <p class="card-text"><small class="text-muted">Joined {{ user.date_added }}</small></p>               
         </div>
     </div>
-    <a href="{{url_for('edit_user',id=user.id)}}" class="btn btn-outline-success">Edit post</a>
-    <a href="{{url_for('delete_post',id=user.id)}}" class="btn btn-outline-danger">Delete post</a>
+    <a href="{{url_for('edit_user',id=user.id)}}" class="btn btn-outline-success">Edit User</a>
+    <a href="{{url_for('delete_post',id=user.id)}}" class="btn btn-outline-danger">Delete User</a>
     
 
 {% endblock %}

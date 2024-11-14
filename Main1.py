@@ -1,8 +1,8 @@
-from flask import Flask, abort, url_for, render_template,redirect,flash
+from flask import Flask, abort, current_app, url_for, render_template,redirect,flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, current_user,login_user,LoginManager,login_required,logout_user
 from flask_wtf import FlaskForm
-from wtforms import IntegerField, StringField,PasswordField,SubmitField,EmailField,SelectField, TextAreaField
+from wtforms import FileField, IntegerField, StringField,PasswordField,SubmitField,EmailField,SelectField, TextAreaField
 from wtforms.validators import InputRequired,Length,ValidationError,Email,EqualTo,Regexp
 from flask_bcrypt import Bcrypt
 from sqlalchemy import func
@@ -36,59 +36,85 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(40), nullable=False)    
     password = db.Column(db.String(80), nullable=False)
-    email=db.Column(db.String(20),nullable=False,unique=True)
-    address=db.Column(db.Text, nullable=False)
-    mobile=db.Column(db.String(15),nullable=False)
-    role=db.Column(db.String(15),nullable=False)
-    status=db.Column(db.Boolean,default=False)    
-    date_added=db.Column(db.DateTime,default=func.now())
+    email = db.Column(db.String(20), nullable=False, unique=True)
+    address = db.Column(db.Text, nullable=False)
+    mobile = db.Column(db.String(15), nullable=False)
+    role = db.Column(db.String(15), nullable=False)
+    status = db.Column(db.Boolean, default=False)    
+    date_added = db.Column(db.DateTime, default=func.now())
     
-    
+    # Backref for flagged users
+    flagged_users = db.relationship('FlaggedUsers', backref='user', lazy=True)
+    # Backref for professionals
+    professionals = db.relationship('Professional', backref='user', lazy=True)
+    # Backref for reviews
+    reviews = db.relationship('Reviews', backref='user', lazy=True)
+
     def __repr__(self):
         return '<Name %r>' % self.name
-    
+
 class FlaggedUsers(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id=db.Column(db.Integer,nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     description = db.Column(db.Text, nullable=False)    
     date_added = db.Column(db.DateTime, nullable=False, default=func.now())
-    
-# model for services
+
 class Services(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(80), nullable=False,unique=True)
+    title = db.Column(db.String(80), nullable=False, unique=True)
     description = db.Column(db.Text, nullable=False)    
-    base_price=db.Column(db.Integer, nullable=False)    
+    base_price = db.Column(db.Integer, nullable=False)    
     date_posted = db.Column(db.DateTime, nullable=False, default=func.now())
     
+    # Backref for service requests
+    service_requests = db.relationship('ServicesRequest', backref='service', lazy=True)
+    
+    
+    
+
 class ServicesRequest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    customer_id=db.Column(db.Integer,nullable=False)
-    professional_id=db.Column(db.Integer,nullable=False)
-    review_id=db.Column(db.Integer,nullable=False)
+    customer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    professional_id = db.Column(db.Integer, db.ForeignKey('professional.id'), nullable=False)
+    review_id = db.Column(db.Integer, nullable=False)
     description = db.Column(db.Text, nullable=False)    
-    status=db.Column(db.Boolean,default=False)
-    service_id=db.Column(db.Integer,nullable=False)
+    status = db.Column(db.Boolean, default=False)
+    service_id = db.Column(db.Integer, db.ForeignKey('services.id'), nullable=False)
+    closing_date = db.Column(db.DateTime)
     date_posted = db.Column(db.DateTime, nullable=False, default=func.now())
-    
-# experience model fro professional
+
 class Professional(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id=db.Column(db.Integer,nullable=False)
-    status=db.Column(db.Boolean,default=False)
-    service_id=db.Column(db.Integer,nullable=False)
-    experience=db.Column(db.Integer, nullable=False)
-    date_posted = db.Column(db.DateTime, nullable=False, default=func.now())
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    service_id = db.Column(db.Integer, db.ForeignKey('services.id'), nullable=False)
+    service=db.Column(db.String(80), nullable=False)
+    status = db.Column(db.Boolean, default=False)
+    experience = db.Column(db.Integer, nullable=False)
+    filename = db.Column(db.String(100), nullable=False)
+    content = db.Column(db.LargeBinary, nullable=False)
+    average_rating = db.Column(db.Float, default=0.0)
+    date_requested = db.Column(db.DateTime, nullable=False, default=func.now())
     
+    # Backref for reviews
+    reviews = db.relationship('Reviews', backref='professional', lazy=True)
+
 class Reviews(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(80), nullable=False)
     description = db.Column(db.Text, nullable=False)
-    rating=db.Column(db.Integer, nullable=False)
-    service_id=db.Column(db.Integer,nullable=False)
-    customer_id=db.Column(db.Integer,nullable=False)
-    professional_id=db.Column(db.Integer,nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    professional_id = db.Column(db.Integer, db.ForeignKey('professional.id'), nullable=False)
+    rating = db.Column(db.Integer, nullable=False)
+    service_id = db.Column(db.Integer, db.ForeignKey('services.id'), nullable=False)
     date_posted = db.Column(db.DateTime, nullable=False, default=func.now())
+    
+    def update_average_review(self):
+        ratings = Reviews.query.filter_by(professional_id=self.professional_id).all()
+        if ratings:
+            average = sum(r.rating for r in ratings) / len(ratings)
+            professional = Professional.query.get(self.professional_id)
+            professional.average_rating = average
+            db.session.commit()
 
 # forms
 class RegisterForm(FlaskForm):
@@ -249,6 +275,58 @@ class EditUserForm(FlaskForm):
             user = User.query.filter_by(email=email.data).first()
             if user:
                 raise ValidationError("Email already exists. Please choose a different one.")
+            
+# from to accept professional details
+class ProfessionalForm(FlaskForm):
+    service = SelectField( 'Service',
+        choices=[],
+        validators=[InputRequired()],
+       
+    ) 
+    
+    experience = IntegerField( 'Experiance',
+        validators=[InputRequired()],
+        
+    )
+    file = FileField('File', 
+            validators=[InputRequired()]
+    )
+    
+    submit=SubmitField("Submit")
+    
+ 
+@app.route('/professional',methods=['GET','POST'])
+@login_required
+def professional():
+    if current_user.role != 'Professional':
+        abort(403)
+        
+    form=ProfessionalForm()
+    form.service.choices = [(service.id, service.title) for service in Services.query.all()]
+    
+    if form.validate_on_submit():
+        
+        file = form.file.data
+        filename = file.filename
+        content = file.read()
+        
+        service_id = form.service.data
+        service = Services.query.get(service_id)
+        prof=Professional(
+            user_id=current_user.id,
+            service=service.title,
+            service_id=service_id,
+            experience=form.experience.data,
+            filename=filename,
+            content=content
+        )
+        
+        db.session.add(prof)
+        db.session.commit()
+        flash("Professional details sent successfully", "success")
+        return redirect(url_for('dashboard'))
+    
+    return render_template('professional.html',form=form)
  
  
 
