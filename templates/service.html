@@ -21,22 +21,22 @@
         {% endwith %}
 
     <br>
-    <br>
-    
+    <br>    
     
     
         <div class="card mb-3" style="display: flex; flex-direction: row; align-items: center; justify-content: center;">
             <div class="card-body">
-                <h5 class="card-title">{{ post.title }}</h5>
-                <p class="card-text">{{ post.content }}</p>
-                <p class="card-text"><small class="text-muted">By {{ post.author }} on {{ post.date_posted }}</small></p>
+                <h5 class="card-title">{{ service.title }}</h5>
+                <p class="card-text">{{ service.description}}</p>
+                <p class="card-text"><strong>Price:</strong> {{ service.base_price }}</p>
+                <p class="card-text"><small class="text-muted">{{ service.date_posted }}</small></p>
             </div>
         </div>
         <br>
-        <a href="{{ url_for('posts') }}" class="btn btn-outline-primary">Back to post</a>
+        <a href="{{ url_for('show_services') }}" class="btn btn-outline-primary">Back to post</a>
         {% if current_user.is_authenticated%}
-        <a href="{{ url_for('edit_post', id=post.id) }}" class="btn btn-outline-success">Edit post</a>
-        <a href="{{ url_for('delete_post', id=post.id) }}" class="btn btn-outline-danger">Delete post</a>
+        <a href="{{url_for('edit_service',id=service.id)}}" class="btn btn-outline-success">Edit post</a>
+        <a href="{{url_for('delete_post',id=service.id)}}" class="btn btn-outline-danger">Delete post</a>
         {% endif %}
        
                 

@@ -14,15 +14,19 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          {% if current_user.id == 0 %}
           <li class="nav-item">
-            <a class="nav-link" href="{{url_for('add_post')}}">add-post</a>
+            <a class="nav-link" href="{{url_for('add_service')}}">Add Services</a>
           </li>
+          {% endif %}
           <li class="nav-item">
-            <a class="nav-link" href="{{url_for('posts')}}">Posts</a>
+            <a class="nav-link" href="{{url_for('show_services')}}">Services</a>
           </li>
+          {% if current_user.id == 0 %}
           <li class="nav-item">
             <a class="nav-link" href="{{url_for('add_user')}}">Add User</a>
           </li>
+          {% endif %}
           <li class="nav-item">
             <a class="nav-link" href="{{url_for('users')}}">Users</a>
           </li>
