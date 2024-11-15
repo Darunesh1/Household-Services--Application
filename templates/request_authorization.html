@@ -24,21 +24,26 @@
     <br>
     
     
-    {% for user in users %}
+    {% for professional in professionals %}
         <div class="card mb-3" style="display: flex; flex-direction: row; align-items: center; justify-content: center;">
             <div class="card-body">
-                Name<p class="card-text">{{ user.name }}</p>
-                Email <p class="card-text">{{ user.email }}</p>
-                Contact <p class="card-text">{{ user.mobile }}</p>
-                Address <p class="card-text">{{ user.address }}</p>
-                <p class="card-text">{{ user.role }}</p>
-               
-                
-                <p class="card-text"><small class="text-muted">Joined {{ user.date_added }}</small></p>
+                Name<p class="card-text">{{ professional.user.name }}</p>
+                Email <p class="card-text">{{ professional.user.email }}</p>
+                Contact <p class="card-text">{{ professional.user.mobile }}</p>
+                Address <p class="card-text">{{ professional.user.address }}</p>
+                <p class="card-text">{{ professional.user.role }}</p>
+                Status: <p class="card-text">{{ professional.user.status }}</p>
+                <p class="card-text">{{ professional.service }}</p>
+                <p class="card-text">{{ professional.experience }}</p>
+                <a href="{{ url_for('download', id=professional.id) }}" class="card-text">{{ professional.filename }}</a>
+                <p class="card-text"><small class="text-muted">Joined {{ professional.user.date_added }}</small></p>
                 {% if current_user.id==0%}
-                <a href="{{url_for('edit_user',id=user.id)}}" class="btn btn-outline-success">Edit User</a>
-                <a href="{{url_for('delete_user',id=user.id)}}" class="btn btn-outline-danger">Delete User</a>
-            {% endif %}               
+                <a href="{{url_for('authorize_professional',id=professional.id)}}" class="btn btn-outline-danger">Authorize User</a>
+                <a href="{{url_for('edit_user',id=professional.user.id)}}" class="btn btn-outline-success">Edit User</a>
+                <a href="{{url_for('delete_post',id=professional.user.id)}}" class="btn btn-outline-danger">Delete User</a>
+
+            {% endif %} 
+
             </div>
             
         </div>

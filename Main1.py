@@ -1,4 +1,5 @@
-from flask import Flask, abort, current_app, url_for, render_template,redirect,flash
+from io import BytesIO
+from flask import Flask, abort, current_app, send_file, url_for, render_template,redirect,flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin, current_user,login_user,LoginManager,login_required,logout_user
 from flask_wtf import FlaskForm
@@ -97,6 +98,8 @@ class Professional(db.Model):
     
     # Backref for reviews
     reviews = db.relationship('Reviews', backref='professional', lazy=True)
+    
+    
 
 class Reviews(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -328,6 +331,27 @@ def professional():
     
     return render_template('professional.html',form=form)
  
+# to display all request professionals
+@app.route('/request_authorization')
+def request_authorization():
+    professionals = Professional.query.filter_by(status=False).all()
+    return render_template('request_authorization.html', professionals=professionals)
+
+
+# authorize professionals
+@app.route('/authorize_professional/<int:id>',methods=['POST','GET'])
+def authorize_professional(id):
+    professional = Professional.query.get(id)
+    professional.status = True
+    db.session.add(professional)
+    db.session.commit()
+    flash(f"{professional.user.name} authorized successfully", "success")
+    return redirect(url_for('request_authorization'))
+
+@app.route('/authorize_professional/download/<int:id>')
+def download(id):
+    professional = Professional.query.get_or_404(id)
+    return send_file(BytesIO(professional.content),as_attachment=True,download_name=professional.filename)
  
 
 @app.route('/register',methods=['GET','POST'])
@@ -401,14 +425,17 @@ def show_services():
 @app.route('/service/<int:id>') 
 def service(id):
     service=Services.query.get_or_404(id)
-    return render_template('service.html',service=service)
+    professionals=Professional.query.filter_by(service_id=id).all()
+    return render_template('service.html',service=service,professionals=professionals)
 
 # edit service
 @app.route('/service/edit/<int:id>',methods=['GET','POST'])
 @login_required
 def edit_service(id):
-    if current_user.id != 0:
+    
+    if current_user.role != 'Admin':
         abort(403)
+        
     title="Edit Service"
     service=Services.query.get_or_404(id)
     form = EditServiceFrom(service)
@@ -433,14 +460,31 @@ def edit_service(id):
     
 
 # delete service
-@app.route('/service/delete/<int:id>',methods=['POST','GET'])
+@app.route('/service/delete/<int:id>', methods=['POST', 'GET'])
 @login_required
-def delete_post(id):
-    service=Services.query.get_or_404(id)
+def delete_service(id):
+    if current_user.role != 'Admin':
+        abort(403)
+
+    service = Services.query.get_or_404(id)
+
+    # Soft delete associated reviews
+    for review in service.service_requests:
+        review.status = False  # Assuming you have a status field in Reviews model
+        # Alternatively, if you have a soft_delete flag:
+        # review.soft_deleted = True
+
+    # Reset status of associated professionals
+    for professional in Professional.query.filter_by(service_id=id).all():
+        professional.status = False
+
+    # Delete the service
     db.session.delete(service)
     db.session.commit()
-    flash(f"{service.title} has been deleted","danger")
+
+    flash(f"{service.title} has been deleted", "danger")
     return redirect(url_for('show_services'))
+
         
         
         
@@ -484,6 +528,10 @@ def about_page(username):
 @app.route('/dashboard',methods=['GET','POST'])
 @login_required
 def dashboard():
+    if current_user.role=='Professional':
+        professional=Professional.query.filter_by(user_id=current_user.id).first()
+        return render_template('dashboard.html',professional=professional,user=current_user)
+    
     return render_template('dashboard.html',user=current_user)
 
 @app.route('/adduser',methods=['GET','POST'])
@@ -528,9 +576,28 @@ def users():
 def delete_user(id):
     user = User.query.get_or_404(id)
     if user:
+        
+        # Delete associated professionals
+        for professional in user.professionals:
+            # Optionally delete associated reviews
+            for review in professional.reviews:
+                db.session.delete(review)  # Correctly indented
+            db.session.delete(professional)
+            
+
+        # Delete flagged users
+        for flagged_user in user.flagged_users:
+            db.session.delete(flagged_user)
+
+        # Delete reviews made by the user
+        for review in user.reviews:
+            db.session.delete(review)
+
+        # Now delete the user
         db.session.delete(user)
         db.session.commit()
-        flash(f"{user.name} has been deleted","danger")
+        
+        flash(f"{user.name} has been deleted", "danger")
         return redirect(url_for('login'))
         
     return redirect(url_for('users'))
