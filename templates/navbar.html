@@ -42,14 +42,16 @@
          
         </ul>
   
-        <form class="d-flex" role="search">
+        <form class="d-flex" method="POST" action="{{url_for('search')}}" role="search">
+          {{form.hidden_tag()}}
           <input
             class="form-control me-2"
             type="search"
-            placeholder="Search"
-            aria-label="Search"
+            placeholder="search"
+            aria-label="search"
+            name="searched"
           />
-          <button class="btn btn-outline-secondary me-2" type="submit">Search</button>
+          <button class="btn btn-outline-secondary me-2" type="submit">search</button>
 
           {% if current_user.is_authenticated %}
 
@@ -60,8 +62,6 @@
           <div>
               <button class="btn btn-outline-primary" type="submit" ><a  href="{{url_for('dashboard')}}">Profile</a></button>
             </div>
-
-           
           
           {% else %}
 

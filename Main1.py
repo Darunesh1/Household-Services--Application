@@ -39,6 +39,10 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(80), nullable=False)
     email = db.Column(db.String(20), nullable=False, unique=True)
     address = db.Column(db.Text, nullable=False)
+    country=db.Column(db.String(20), nullable=False)
+    state=db.Column(db.String(20), nullable=False)
+    city=db.Column(db.String(20), nullable=False)
+    pincode=db.Column(db.Integer, nullable=False)
     mobile = db.Column(db.String(15), nullable=False)
     role = db.Column(db.String(15), nullable=False)
     status = db.Column(db.Boolean, default=False)    
@@ -166,7 +170,27 @@ class RegisterForm(FlaskForm):
         'Address',
         validators=[InputRequired()],
         
+    )
+    country = StringField(
+        'Country',
+        validators=[InputRequired()],
+        
     )     
+    state = StringField(
+        'State',
+        validators=[InputRequired()],
+        
+    )
+    city = StringField(
+        'City',
+        validators=[InputRequired()],
+        
+    )
+    pincode = IntegerField(
+        'Pincode',
+        validators=[InputRequired()],
+        
+    )
     
     submit=SubmitField("Register")
     
@@ -268,6 +292,26 @@ class EditUserForm(FlaskForm):
         validators=[InputRequired()],
         
     )
+    country = StringField(
+        'Country',
+        validators=[InputRequired()],
+        
+    )     
+    state = StringField(
+        'State',
+        validators=[InputRequired()],
+        
+    )
+    city = StringField(
+        'City',
+        validators=[InputRequired()],
+        
+    )
+    pincode = IntegerField(
+        'Pincode',
+        validators=[InputRequired()],
+        
+    )
     
     
     submit=SubmitField("Register")  
@@ -279,6 +323,8 @@ class EditUserForm(FlaskForm):
             if user:
                 raise ValidationError("Email already exists. Please choose a different one.")
             
+  
+          
 # from to accept professional details
 class ProfessionalForm(FlaskForm):
     service = SelectField( 'Service',
@@ -296,6 +342,29 @@ class ProfessionalForm(FlaskForm):
     )
     
     submit=SubmitField("Submit")
+    
+# form for search
+class SearchForm(FlaskForm):
+    searched=StringField("Searched",
+        validators=[InputRequired()])
+    
+    submit=SubmitField("search")
+    
+
+# pass to navbar
+@app.context_processor
+def base():
+    form=SearchForm()
+    return dict(form=form)  #dictonary
+    
+    
+# search function
+@app.route('/search', methods=['POST'])
+def search():
+    form = SearchForm()
+    if form.validate_on_submit():        
+        service.searched = form.searched.data
+        return render_template('search.html', form=form,searched=service.searched)
     
  
 @app.route('/professional',methods=['GET','POST'])
@@ -367,6 +436,10 @@ def register():
             email=form.email.data, 
             mobile=form.mobile.data, 
             address=form.address.data,
+            state=form.address.data,
+            city=form.city.data,
+            country=form.country.data,
+            pincode=form.pincode.data,            
             role=form.role.data
             )
 
@@ -415,6 +488,7 @@ def add_service():
            
  
 #  show posts
+@app.route('/')
 @app.route('/services')
 def show_services():
     services=Services.query.order_by(Services.date_posted.desc()).all()
@@ -467,12 +541,12 @@ def delete_service(id):
         abort(403)
 
     service = Services.query.get_or_404(id)
+    
+    for service_request in service.service_requests:
+        for review in service_request.reviews:
+            db.session.delete(review)
+        db.session.delete(service_request)
 
-    # Soft delete associated reviews
-    for review in service.service_requests:
-        review.status = False  # Assuming you have a status field in Reviews model
-        # Alternatively, if you have a soft_delete flag:
-        # review.soft_deleted = True
 
     # Reset status of associated professionals
     for professional in Professional.query.filter_by(service_id=id).all():
@@ -507,6 +581,8 @@ def login():
     return render_template('login.html',form=form)
 
 
+
+
 # logout
 @app.route('/logout',methods=['GET','POST'])
 @login_required
@@ -516,9 +592,7 @@ def logout():
     return redirect(url_for('login'))
 
 
-@app.route('/')
-def hello_world():
-    return render_template('base.html')
+
 
 
 @app.route('/about/<username>')
@@ -613,7 +687,11 @@ def edit_user(id):
         user.name=form.name.data
         user.email=form.email.data
         user.mobile=form.mobile.data
-        user.address=form.address.data                
+        user.address=form.address.data
+        user.state=form.address.data
+        user.city=form.city.data
+        user.country=form.country.data
+        user.pincode=form.pincode.data         
           
                     
         db.session.add(user)
