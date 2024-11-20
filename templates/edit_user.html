@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container d-flex justify-content-center mt-5" style="height: 100vh;">
-    <div class="col-md-4" style="max-width: 400px; width: 100%;">
+<div>
+
+    <div>
         <h2 class="text-center mb-4" style="font-size: 2em;">{{title}}</h2>
         {% with messages=get_flashed_messages(with_categories=True) %}
             {% if messages %}
@@ -33,16 +34,8 @@
             <div class="form-group">
                 {{ form.mobile.label(class="form-label") }}
                 {{ form.mobile(class="form-control form-control-lg") }} 
-            </div>            
-            <div class="form-group mt-3">
-                {{ form.password.label(class="form-label") }}
-                {{ form.password(class="form-control form-control-lg") }} 
             </div>
-            <div class="form-group mt-3">
-                {{ form.repassword.label(class="form-label") }}
-                {{ form.repassword(class="form-control form-control-lg") }} 
-            </div>
-            <div class="form-group mt-3">
+            <div class="form-group">
                 {{ form.address.label(class="form-label") }}
                 {{ form.address(class="form-control form-control-lg") }} 
             </div>
@@ -63,29 +56,11 @@
                 {{ form.pincode(class="form-control form-control-lg") }} 
             </div>
             <div class="form-group mt-3">
-                {{ form.role.label(class="form-label") }}
-                {{ form.role(class="form-control form-control-lg") }} 
-            </div>          
-            <p><a href="{{url_for('login')}}">I have a account</a></p>  
-           
-            <div class="form-group mt-3">
                 {{ form.submit(class="btn btn-primary btn-block btn-lg") }} 
             </div>
         </form>
     </div>
 </div>
 
-<script>
-    //  Set a timeout to fade out the flash messages
-    setTimeout(() => {
-        const flashMessages = document.getElementById('flash-messages');
-        if (flashMessages) {
-            flashMessages.style.transition = "opacity 0.5s ease"; // make the css opacity 
-            flashMessages.style.opacity = 0;
-            setTimeout(() => {
-                flashMessages.remove();
-            }, 500); // executes after 0.5 then remove 
-        }
-    }, 3000); //3 sex wait 
-</script>
+
 {% endblock %}

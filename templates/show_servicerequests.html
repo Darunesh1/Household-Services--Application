@@ -2,7 +2,7 @@
 
 {% block content %}
 <div>
-    <div>        
+    <div>
         {% with messages=get_flashed_messages(with_categories=True) %}
             {% if messages %}
                 <div id="flash-messages" style="width: 100%;">
@@ -19,12 +19,10 @@
                 </div>
             {% endif %}
         {% endwith %}
-<br>
-<br>
 
-    
-
-    <h2>Service Requests List</h2>
+        <br><br>
+               
+            <h2>Service Requests List</h2>
             <table class="table">
                 <thead>
                     <tr>
@@ -41,17 +39,21 @@
                     {% for request in requests %}
                         <tr>
                             <th scope="row">{{ loop.index }}</th>
-                            <td>{{ request.professional.user.name }}</td>
-                            <td>{{ request.professional.user.email }}</td>
-                            <td>{{ request.professional.user.mobile }}</td>
+                            <td>{{ request.user.name }}</td>
+                            <td>{{ request.user.email }}</td>
+                            <td>{{ request.user.mobile }}</td>
                             <td>{{ request.status }}</td>
+                            <td>{{ request.user.address }} {{request.user.city}} {{request.user.pincode}}</td>
                             {% if request.status == "Pending" %}
-                            <td><a href="{{url_for('edit_request',id=request.id)}}" class="btn btn-primary">Edit</a></td>
-                            <td><a href="#" class="btn btn-primary">Delete Request</a></td>
-                            {%elif request.status == "Accepted"%}
-                            <td><a href="{{url_for('view_requests',id=request.id)}}" class="btn btn-primary">view</a></td>
-                            {%endif%}
-                            
+                            <td>
+                                <a href="{{ url_for('accept_request', id=request.id) }}" class="btn btn-primary">Accept</a>
+                                <a href="{{ url_for('reject_request', id=request.id) }}" class="btn btn-primary">Reject</a>
+                            </td>
+                            {% elif request.status == "Accepted" %}
+                            <td>
+                                <a href="{{ url_for('view_request', id=request.id) }}" class="btn btn-primary">View</a>
+                            </td>
+                            {% endif %}
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -60,8 +62,4 @@
         
         
 </div>
-
-
-    
-
 {% endblock %}

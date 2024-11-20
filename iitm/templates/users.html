@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div >
+    <div >        
+        {% with messages=get_flashed_messages(with_categories=True) %}
+            {% if messages %}
+                <div id="flash-messages" style="width: 100%;">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} fade show mt-3" role="alert" style="font-size: 1.2em; padding: 15px;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>{{ message }}</span>
+                                <button type="button" class="close" onclick="this.parentElement.parentElement.remove();">
+                                    &times;
+                                </button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+    <br>
+    <br>
+    
+    
+    {% for user in users %}
+        <div class="card mb-3" style="display: flex; flex-direction: row; align-items: center; justify-content: center;">
+            <div class="card-body">
+                Name<p class="card-text">{{ user.name }}</p>
+                Email <p class="card-text">{{ user.email }}</p>
+                Contact <p class="card-text">{{ user.mobile }}</p>
+                Address <p class="card-text">{{ user.address }}</p>
+                country:<p class="card-text">{{ user.country }}</p>
+                City <p class="card-text">{{ user.city }}</p>
+                Pincode <p class="card-text">{{ user.pincode }}</p>
+                <p class="card-text">{{ user.role }}</p>
+               
+                
+                <p class="card-text"><small class="text-muted">Joined {{ user.date_added }}</small></p>
+                {% if current_user.id==0%}
+                <a href="{{url_for('edit_user',id=user.id)}}" class="btn btn-outline-success">Edit User</a>
+                <a href="{{url_for('delete_user',id=user.id)}}" class="btn btn-outline-danger">Delete User</a>
+            {% endif %}               
+            </div>
+            
+        </div>
+        
+        
+       
+                
+    {% endfor%}
+    
+
+{% endblock %}

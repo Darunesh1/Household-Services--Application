@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container d-flex justify-content-center mt-5" style="height: 100vh;">
     <div class="col-md-4" style="max-width: 400px; width: 100%;">
-        <h2 class="text-center mb-4" style="font-size: 2em;">{{title}}</h2>
+        <h2 class="text-center mb-4" style="font-size: 2em;">Login</h2>
         {% with messages=get_flashed_messages(with_categories=True) %}
             {% if messages %}
                 <div id="flash-messages" style="width: 100%;">
@@ -23,51 +23,14 @@
         <form method="POST" action="" style="padding: 20px; border: 1px solid #ccc; border-radius: 5px; background-color: #f9f9f9;">
             {{ form.hidden_tag() }}
             <div class="form-group">
-                {{ form.name.label(class="form-label") }}
-                {{ form.name(class="form-control form-control-lg") }} 
+                {{ form.username.label(class="form-label") }}
+                {{ form.username(class="form-control form-control-lg") }} 
             </div>
-            <div class="form-group">
-                {{ form.email.label(class="form-label") }}
-                {{ form.email(class="form-control form-control-lg") }} 
-            </div>
-            <div class="form-group">
-                {{ form.mobile.label(class="form-label") }}
-                {{ form.mobile(class="form-control form-control-lg") }} 
-            </div>            
             <div class="form-group mt-3">
                 {{ form.password.label(class="form-label") }}
                 {{ form.password(class="form-control form-control-lg") }} 
             </div>
-            <div class="form-group mt-3">
-                {{ form.repassword.label(class="form-label") }}
-                {{ form.repassword(class="form-control form-control-lg") }} 
-            </div>
-            <div class="form-group mt-3">
-                {{ form.address.label(class="form-label") }}
-                {{ form.address(class="form-control form-control-lg") }} 
-            </div>
-            <div class="form-group mt-3">
-                {{ form.country.label(class="form-label") }}
-                {{ form.country(class="form-control form-control-lg") }} 
-            </div>
-            <div class="form-group mt-3">
-                {{ form.state.label(class="form-label") }}
-                {{ form.state(class="form-control form-control-lg") }} 
-            </div>
-            <div class="form-group mt-3">
-                {{ form.city.label(class="form-label") }}
-                {{ form.city(class="form-control form-control-lg") }} 
-            </div>
-            <div class="form-group mt-3">
-                {{ form.pincode.label(class="form-label") }}
-                {{ form.pincode(class="form-control form-control-lg") }} 
-            </div>
-            <div class="form-group mt-3">
-                {{ form.role.label(class="form-label") }}
-                {{ form.role(class="form-control form-control-lg") }} 
-            </div>          
-            <p><a href="{{url_for('login')}}">I have a account</a></p>  
-           
+            <p><a href="{{url_for('register')}}">Don't have a account</a></p>
             <div class="form-group mt-3">
                 {{ form.submit(class="btn btn-primary btn-block btn-lg") }} 
             </div>
