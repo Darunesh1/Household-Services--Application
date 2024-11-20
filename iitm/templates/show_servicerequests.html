@@ -21,27 +21,8 @@
         {% endwith %}
 
         <br><br>
-
-        <div class="card mb-3" style="display: flex; flex-direction: row; align-items: center; justify-content: center;">
-            <div class="card-body">
-                <h5 class="card-title">{{ service.title }}</h5>
-                <p class="card-text">{{ service.description }}</p>
-                <p class="card-text"><strong>Price:</strong> {{ service.base_price }}</p>
-                <p class="card-text"><small class="text-muted">{{ service.date_posted }}</small></p>
-            </div>
-        </div>
-        <br>
-        <a href="{{ url_for('show_services') }}" class="btn btn-outline-primary">Back to Services</a>
-        {% if current_user.role == 'Admin' %}
-            <a href="{{ url_for('edit_service', id=service.id) }}" class="btn btn-outline-success">Edit service</a>
-            <a href="{{ url_for('delete_service', id=service.id) }}" class="btn btn-outline-danger">Delete service</a>
-        {% endif %}
-
-        <br>
-        <br>
-        
-        <div>
-            <h2>Professional List</h2>
+               
+            <h2>Service Requests List</h2>
             <table class="table">
                 <thead>
                     <tr>
@@ -49,23 +30,30 @@
                         <th scope="col">Name</th>
                         <th scope="col">Email</th>
                         <th scope="col">Contact</th>
+                        <th scope="col">Status</th>
                         <th scope="col">Address</th>
-                        <th scope="col">Handle</th>
                         <th scope="col">Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for professional in professionals %}
+                    {% for request in requests %}
                         <tr>
                             <th scope="row">{{ loop.index }}</th>
-                            <td>{{ professional.user.name }}</td>
-                            <td>{{ professional.user.email }}</td>
-                            <td>{{ professional.user.mobile }}</td>
-                            <td>{{ professional.user.address }} {{professional.user.city}} {{professional.user.pincode}}</td>
-                            <td><a href="{{ url_for('download', id=professional.id) }}"">{{ professional.filename }}</a></td>
+                            <td>{{ request.user.name }}</td>
+                            <td>{{ request.user.email }}</td>
+                            <td>{{ request.user.mobile }}</td>
+                            <td>{{ request.status }}</td>
+                            <td>{{ request.user.address }} {{request.user.city}} {{request.user.pincode}}</td>
+                            {% if request.status == "Pending" %}
                             <td>
-                                <a href="{{ url_for('servicerequest', service_id=service.id, id=professional.id) }}" class="btn btn-primary">Book Service</a>
+                                <a href="{{ url_for('accept_request', id=request.id) }}" class="btn btn-primary">Accept</a>
+                                <a href="{{ url_for('reject_request', id=request.id) }}" class="btn btn-primary">Reject</a>
                             </td>
+                            {% elif request.status == "Accepted" %}
+                            <td>
+                                <a href="{{ url_for('view_request', id=request.id) }}" class="btn btn-primary">View</a>
+                            </td>
+                            {% endif %}
                         </tr>
                     {% endfor %}
                 </tbody>

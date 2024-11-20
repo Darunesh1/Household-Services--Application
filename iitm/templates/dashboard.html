@@ -22,7 +22,26 @@
 <br>
 <br>
 
-    
+    <div class="card mb-3" style="display: flex; flex-direction: row; align-items: center; justify-content: center;">
+        <div class="card-body">
+                Name<p class="card-text">{{ user.name }}</p>
+                Email <p class="card-text">{{ user.email }}</p>
+                Contact <p class="card-text">{{ user.mobile }}</p>
+                Address <p class="card-text">{{ user.address }}</p>
+                country:<p class="card-text">{{ user.country }}</p>
+                City <p class="card-text">{{ user.city }}</p>
+                Pincode <p class="card-text">{{ user.pincode }}</p>
+                <p class="card-text">{{ user.role }}</p>
+                
+                {% if user.role == 'Professional' %}
+                Status: <p class="card-text">{{ professional.status }}</p>
+                {% endif %}
+
+                <p class="card-text"><small class="text-muted">Joined {{ user.date_added }}</small></p>               
+        </div>
+    </div>
+    <a href="{{url_for('edit_user',id=user.id)}}" class="btn btn-outline-success">Edit User</a>
+    <a href="{{url_for('delete_user',id=user.id)}}" class="btn btn-outline-danger">Delete User</a>
 
     <h2>Service Requests List</h2>
             <table class="table">
@@ -48,8 +67,6 @@
                             {% if request.status == "Pending" %}
                             <td><a href="{{url_for('edit_request',id=request.id)}}" class="btn btn-primary">Edit</a></td>
                             <td><a href="#" class="btn btn-primary">Delete Request</a></td>
-                            {%elif request.status == "Accepted"%}
-                            <td><a href="{{url_for('view_requests',id=request.id)}}" class="btn btn-primary">view</a></td>
                             {%endif%}
                             
                         </tr>

@@ -39,19 +39,23 @@ class User(UserMixin, db.Model):
     password = db.Column(db.String(80), nullable=False)
     email = db.Column(db.String(20), nullable=False, unique=True)
     address = db.Column(db.Text, nullable=False)
-    country = db.Column(db.String(20), nullable=False)
-    state = db.Column(db.String(20), nullable=False)
-    city = db.Column(db.String(20), nullable=False)
-    pincode = db.Column(db.Integer, nullable=False)
+    country=db.Column(db.String(20), nullable=False)
+    state=db.Column(db.String(20), nullable=False)
+    city=db.Column(db.String(20), nullable=False)
+    pincode=db.Column(db.Integer, nullable=False)
     mobile = db.Column(db.String(15), nullable=False)
     role = db.Column(db.String(15), nullable=False)
-    status = db.Column(db.String(15), nullable=False, default='Active')    
+    status = db.Column(db.String(15), nullable=False,default='Active')    
     date_added = db.Column(db.DateTime, default=func.now())
     
-    flagged_users = db.relationship('FlaggedUsers', backref='user', lazy=True,uselist=False, cascade="all, delete-orphan")
-    professional = db.relationship('Professional', backref='user', lazy=True,uselist=False, cascade="all, delete-orphan")
-    reviews = db.relationship('Reviews', backref='user', lazy=True, cascade="all, delete-orphan")
-    service_requests = db.relationship('ServiceRequests', backref='user', lazy=True, cascade="all, delete-orphan")
+    # Backref for flagged users
+    flagged_users = db.relationship('FlaggedUsers', backref='user', lazy=True)
+    # Backref for professionals
+    professionals = db.relationship('Professional', backref='user', lazy=True)
+    # Backref for reviews
+    reviews = db.relationship('Reviews', backref='user', lazy=True)
+    # backref for service requests
+    service_requests = db.relationship('ServiceRequests', backref='user', lazy=True)
 
     def __repr__(self):
         return '<Name %r>' % self.name
@@ -69,15 +73,20 @@ class Services(db.Model):
     base_price = db.Column(db.Integer, nullable=False)    
     date_posted = db.Column(db.DateTime, nullable=False, default=func.now())
     
-    service_requests = db.relationship('ServiceRequests', backref='service', lazy=True, cascade="all, delete-orphan")
+    # Backref for service requests
+    service_requests = db.relationship('ServiceRequests', backref='service', lazy=True)
+    
+    
+    
 
 class ServiceRequests(db.Model):
+    
     id = db.Column(db.Integer, primary_key=True)
     customer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     professional_id = db.Column(db.Integer, db.ForeignKey('professional.id'), nullable=False)
     review_id = db.Column(db.Integer, db.ForeignKey('reviews.id'))
     description = db.Column(db.Text, nullable=False)    
-    status = db.Column(db.String(15), nullable=False, default='Pending')    
+    status = db.Column(db.String(15), nullable=False,default='Pending')    
     service_id = db.Column(db.Integer, db.ForeignKey('services.id'), nullable=False)
     closing_date = db.Column(db.DateTime)
     date_posted = db.Column(db.DateTime, nullable=False, default=func.now())
@@ -86,7 +95,7 @@ class Professional(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     service_id = db.Column(db.Integer, db.ForeignKey('services.id'), nullable=False)
-    service = db.Column(db.String(80), nullable=False)
+    service=db.Column(db.String(80), nullable=False)
     status = db.Column(db.Boolean, default=False)
     experience = db.Column(db.Integer, nullable=False)
     filename = db.Column(db.String(100), nullable=False)
@@ -94,8 +103,13 @@ class Professional(db.Model):
     average_rating = db.Column(db.Float, default=0.0)
     date_requested = db.Column(db.DateTime, nullable=False, default=func.now())
     
-    reviews = db.relationship('Reviews', backref='professional', lazy=True, cascade="all, delete-orphan")
-    service_requests = db.relationship('ServiceRequests', backref='professional', lazy=True, cascade="all, delete-orphan")
+    # Backref for reviews
+    reviews = db.relationship('Reviews', backref='professional', lazy=True)
+    
+    # backref for service requests
+    service_requests = db.relationship('ServiceRequests', backref='professional', lazy=True)
+    
+    
 
 class Reviews(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -106,7 +120,7 @@ class Reviews(db.Model):
     rating = db.Column(db.Integer(), nullable=False)
     service_request_id = db.Column(db.Integer, db.ForeignKey('service_requests.id'), nullable=False)
     date_posted = db.Column(db.DateTime, nullable=False, default=func.now())
-
+    
     def update_average_review(self):
         ratings = Reviews.query.filter_by(professional_id=self.professional_id).all()
         if ratings:
@@ -114,7 +128,6 @@ class Reviews(db.Model):
             professional = Professional.query.get(self.professional_id)
             professional.average_rating = average
             db.session.commit()
-
 
 # forms
 class RegisterForm(FlaskForm):
@@ -752,15 +765,27 @@ def edit_service(id):
 @app.route('/service/delete/<int:id>', methods=['POST', 'GET'])
 @login_required
 def delete_service(id):
-    service=Services.query.get_or_404(id)
+    if current_user.role != 'Admin':
+        abort(403)
+
+    service = Services.query.get_or_404(id)
     
-    if service:
+    for service_request in service.service_requests:
+        for review in service_request.reviews:
+            db.session.delete(review)
+        db.session.delete(service_request)
+
+
+    # Reset status of associated professionals
+    for professional in Professional.query.filter_by(service_id=id).all():
+        professional.status = False
 
     # Delete the service
-        db.session.delete(service)
-        db.session.commit()
-        flash(f"{service.title} has been deleted", "danger")
-        return redirect(url_for('show_services'))
+    db.session.delete(service)
+    db.session.commit()
+
+    flash(f"{service.title} has been deleted", "danger")
+    return redirect(url_for('show_services'))
 
         
         
@@ -814,19 +839,7 @@ def dashboard():
     requests=ServiceRequests.query.filter_by(customer_id=current_user.id).all()
     
     
-    return render_template('dashboard.html',requests=requests)
-
-@app.route('/profile/<int:id>',methods=['GET','POST'])
-@login_required
-def profile(id):
-    user=User.query.get_or_404(id) 
-    return render_template('profile.html',user=user)
-
-@app.route('/chart',methods=['GET','POST'])
-@login_required
-def chart():
-    return render_template('chart.html')
-    
+    return render_template('dashboard.html',user=current_user,requests=requests)
 
 @app.route('/adduser',methods=['GET','POST'])
 @login_required
@@ -844,10 +857,6 @@ def  add_user():
             email=form.email.data, 
             mobile=form.mobile.data, 
             address=form.address.data,
-            state=form.address.data,
-            city=form.city.data,
-            country=form.country.data,
-            pincode=form.pincode.data,            
             role=form.role.data
             )
         
@@ -855,9 +864,7 @@ def  add_user():
         db.session.commit()
         flash("user added successfully", "success")
         
-        return redirect(url_for('users'))
-        
-        
+        return redirect(url_for('login'))
     
     return render_template('register.html',form=form,title=title)
 
@@ -876,12 +883,42 @@ def users():
 def delete_user(id):
     user = User.query.get_or_404(id)
     
-    if user:        
-        db.session.delete(user)
-        db.session.commit()
-        flash(f"{user.name} has been deleted", "danger")
-        return redirect(url_for('users'))
-      
+    if request.method == 'POST':
+        try:
+            # Begin a database transaction
+            with db.session.begin():
+                # Delete associated service requests for this user
+                service_requests = ServiceRequests.query.filter_by(customer_id=user.id).all()
+                for service_request in service_requests:
+                    db.session.delete(service_request)
+
+                # Delete associated professionals and their reviews
+                for professional in user.professionals:
+                    for review in professional.reviews:
+                        db.session.delete(review)
+                    db.session.delete(professional)
+
+                # Delete flagged users
+                for flagged_user in user.flagged_users:
+                    db.session.delete(flagged_user)
+
+                # Delete reviews made by the user
+                for review in user.reviews:
+                    db.session.delete(review)
+
+                # Now delete the user itself
+                db.session.delete(user)
+            
+            # Commit the transaction
+            db.session.commit()
+
+            flash(f"{user.name} has been deleted successfully", "danger")
+            return redirect(url_for('login'))  # Redirect to login page after deletion
+
+        except Exception as e:
+            db.session.rollback()  # Rollback in case of an error
+            flash(f"Error occurred: {str(e)}", "danger")
+            return redirect(url_for('users'))  # Redirect back to user listing page
 
     return render_template('users.html', user=user)
 
@@ -913,11 +950,7 @@ def edit_user(id):
     form.name.data=user.name   
     form.email.data=user.email
     form.mobile.data=user.mobile
-    form.address.data=user.address
-    form.state.data=user.state
-    form.city.data=user.city
-    form.country.data=user.country
-    form.pincode.data=user.pincode
+    form.address.data=user.address 
         
     
     if form.errors:
